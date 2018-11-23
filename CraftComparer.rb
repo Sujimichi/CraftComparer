@@ -3,9 +3,10 @@
 #
 #an instance of CraftComparer::Craft can be compaired with another instance of CraftComparer::Craft 
 #CraftComparer::Craft takes an Array of strings (the craft file) as the first argument and an optional hash of settings as the 2nd argument
-#craft = CraftComparer::Craft(<craft_file_array>, :sensitivity => 1, :trials => 10000, :output => true)
+#craft = CraftComparer::Craft.new(<craft_file_array>, :sensitivity => 1, :trials => 10000, :output => true)
+#another_craft = CraftComparer::Craft.new(<craft_file_array>)
 #craft.compare_with(another_craft) #=> returns percent similarity as float
-#craft == another_craft #=> returns a bool; true if the percent similarity is above CraftComparer::Threshold
+#craft == another_craft or craft.eql?(another_craft) #=> returns a bool; true if the percent similarity is above CraftComparer::Threshold
 #The CraftComparer class just provides some boiler plate methods to help with testing (and also acts to wrap the Craft class so it doesn't clobber the core Craft class in KerbalX)
 #CraftComparer.list_craft #=> displays a list of the craft files in the current directory with their coresponding indexes
 #CraftComarer.load_by_index(index) #=> returns the craft file (array of strings) for the craft with the given index
@@ -14,7 +15,7 @@
 class CraftComparer
   PartKeys = %w[part pos attPos attPos0 rot attRot attRot0 mir symMethod autostrutMode rigidAttachment istg link attN]
   #PartKeys = %w[part partName persistentId pos attPos attPos0 rot attRot attRot0 mir symMethod autostrutMode rigidAttachment istg]
-  Threshold = 80 #craft that are 80% similar are considered equal #todo tweak this value
+  Threshold = 60 #craft that are 80% similar are considered equal #todo tweak this value
 
 
   #dev method to quickly fetch a craft file from current dir
