@@ -42,6 +42,7 @@ class CraftComparer
     def initialize craft_file, args = {}
       raise "expected first argument to be an Array" unless craft_file.is_a?(Array)
       @args = {:sensitivity => 1, :trials => 10000, :output => true}.merge(args) #defaults can be overidden by supplying optional hash as 2nd argument
+      @mode = :kat
       @craft_name = craft_file[0].split("=").last.strip          
       @string = [get_header_from(craft_file), get_parts_from(craft_file)].flatten.compact.join
     end
@@ -65,16 +66,16 @@ class CraftComparer
 
     #generate a random index for a 'window'; a randomly sized, randomly located region within the craft data string
     def windex    
-      window = (@args[:sensitivity] * ((rand*80).round + 20)).to_i
-      a = rand * @string.length - window    
-      [a..a+window]
+      window = (rand*80 + 20).to_i * @args[:sensitivity] #random integer between 20 and 100 multipled by sensitivity
+      start_index = (rand * @string.length).to_i - window #random integer between 0 and string length minus the window
+      [start_index..start_index+window] #return the range.
     end
 
     #returns an Array of Strings from the first line of the craft file until the first PART
     def get_header_from craft_file
       header_range = [0..craft_file.index{|e| e =~ /^PART/}-1] #header is from first line to the line before the first occurance of PART
-      craft_file[*header_range]
-      #craft_file[0..10]
+      header_range = [0..10] if @mode == :servo
+      craft_file[*header_range]       
     end
 
     #returns an Array of Strings, one element per part in the craft file. Each element contains selected data for the part joined together as a single string
@@ -87,10 +88,15 @@ class CraftComparer
 
       part_indexes.map do |start_index, end_index|
         part_data = craft_file[start_index..end_index] #get all lines for a PART
-        significant_lines = part_data.select{|line| PartKeys.include?(line.split("=")[0].strip) } #select the lines with required keys
-        #significant_lines  = part_data[2..14]
-        #discard any data following an underscore (ID references), remove leading/trailing whitespace, new-line/tab chars, and join lines together.
-        significant_lines.map{|line| line.split("_")[0].strip }.join 
+        if @mode == :servo
+          significant_lines = part_data[2..14]
+          significant_lines.join
+        else
+          significant_lines = part_data.select{|line| PartKeys.include?(line.split("=")[0].strip) } #select the lines with required keys  
+          #discard any data following an underscore (ID references), remove leading/trailing whitespace, new-line/tab chars, and join lines together.      
+          significant_lines.map{|line| line.split("_")[0].strip }.join 
+        end
+
       end
     end
   end
