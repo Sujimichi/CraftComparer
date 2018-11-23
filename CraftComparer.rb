@@ -13,7 +13,7 @@
 #where x and y are integers that index the craft files in the current directory
 class CraftComparer
   PartKeys = %w[part pos attPos attPos0 rot attRot attRot0 mir symMethod autostrutMode rigidAttachment istg link attN]
-  #PartKeys = %w[part partName persistentId pos attPos attPos0 rot attRot attRot0 mir symMethod autostrutMode]
+  #PartKeys = %w[part partName persistentId pos attPos attPos0 rot attRot attRot0 mir symMethod autostrutMode rigidAttachment istg]
   Threshold = 80 #craft that are 80% similar are considered equal #todo tweak this value
 
 
@@ -47,7 +47,7 @@ class CraftComparer
     end
 
     def compare_with craft
-      raise "craft must be an instance of Craft" unless craft.is_a?(CraftComparer::Craft)
+      raise "craft must be an instance of CraftComparer::Craft" unless craft.is_a?(CraftComparer::Craft)
       #generate an array of @args[:trials] in length and for each element test if the randomly selected section ('window') in the current craft (self)
       #occurs in the comparison craft and count the elements in which the test returns true.
       hits = @args[:trials].times.select{ craft.string.include?(self.string[*windex]) }.count
@@ -57,7 +57,7 @@ class CraftComparer
     end
 
     def == craft
-      self.compare_with(craft) >= Threshold
+      self.compare_with(craft) >= CraftComparer::Threshold
     end
     alias :eql? :==
 
@@ -80,10 +80,9 @@ class CraftComparer
     #returns an Array of Strings, one element per part in the craft file. Each element contains selected data for the part joined together as a single string
     def get_parts_from craft_file
       #get indexes of start and end lines for each PART
-      start_indexes = craft_file.each_with_index.select{|l,ind| l =~ /^PART/}.map{|p| p[1]}  #Parts start on lines that start with 'PART' at the start of a line
-      end_indexes   = craft_file.each_with_index.select{|l,ind| l =~ /^}/}.map{|p| p[1]}     #Parts end on lines that start with '}' at the start of a line
-      raise "PART/braket mismatch" unless start_indexes.count == end_indexes.count
-
+      start_indexes = craft_file.each_with_index.select{|l,ind| l =~ /^PART/}.map{|p| p[1]} #Parts start on lines with 'PART' at the start of a line
+      end_indexes   = craft_file.each_with_index.select{|l,ind| l =~ /^}/}.map{|p| p[1]}    #Parts end on lines with '}' at the start of a line
+      raise "PART/braket mismatch" unless start_indexes.count == end_indexes.count          #just incase
       part_indexes = start_indexes.zip(end_indexes) #combine start and end indexes into pairs [[start_ind, end_ind], [start_ind, end_ind]...]
 
       part_indexes.map do |start_index, end_index|
