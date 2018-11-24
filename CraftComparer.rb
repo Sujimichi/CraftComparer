@@ -42,7 +42,7 @@ class CraftComparer
 
     def initialize craft_file, args = {}
       raise "expected first argument to be an Array" unless craft_file.is_a?(Array)
-      @args = {:sensitivity => 1, :trials => 10000, :output => true}.merge(args) #defaults can be overidden by supplying optional hash as 2nd argument
+      @args = {:sensitivity => 1, :trials => 10000, :output => false}.merge(args) #defaults can be overidden by supplying optional hash as 2nd argument
       @mode = :kat #change to :servo to use servo's cleaning style
       @craft_name = craft_file[0].split("=").last.strip #should prob be craft_file[craft_file.index{|l| l =~ /^ship/}].split("=").last.strip 
       @string = [get_header_from(craft_file), get_parts_from(craft_file)].flatten.compact.join
