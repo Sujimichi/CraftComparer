@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+require 'craft_comparer/cli'
+CraftComparer::CLI.start
+

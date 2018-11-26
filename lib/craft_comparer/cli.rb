@@ -13,3 +13,4 @@ module CraftComparer
 
   end
 end
+
