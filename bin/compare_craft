@@ -1,3 +1,4 @@
 #!/usr/bin/env ruby
 require 'craft_comparer/cli'
-CraftComparer::CLI.start
+ARGV.unshift(CraftComparer::CLI.default_task) unless CraftComparer::CLI.all_tasks.has_key?(ARGV[0]) || CraftComparer::CLI.instance_variable_get(:@map).has_key?(ARGV[0])
+CraftComparer::CLI.start(ARGV)
