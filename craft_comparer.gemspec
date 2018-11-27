@@ -35,4 +35,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "guard", "~> 2.0"
   spec.add_development_dependency "guard-rspec", "~> 4.0"  
   spec.add_runtime_dependency "thor", "~> 0"
+  spec.add_runtime_dependency "ffi", ">= 1.9.24"
 end
