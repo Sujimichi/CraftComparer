@@ -14,13 +14,17 @@ end
 
 module CraftComparer
   class CLI < Thor
+    attr_accessor :comparison_track, :summary
+
     default_task :craft
+    class_option "reverse", :type => :string, :default => false, :aliases => "r"
 
     def self.exit_on_failure?
       true
     end
+    
 
-    desc "CRAFT", "compare given craft name/path/index with other craft. run compare_craft help craft for more info"
+    desc "CRAFT", "compare given craft with other craft. run `compare_craft help craft` for more"
     long_desc <<-LONGDESC 
     Craft Comparer can be given the name of a file in the current directory, the path to a craft file 
     or the index of a craft in the current directory (run compare_craft --list, to get a list with index numbers).
@@ -35,9 +39,11 @@ module CraftComparer
 
     To compare each craft in the current directory against each other use the --all option      
       compare_craft --all
+
+    When doing any comparison you can add the -r or --reverse option. This will run the initial comparison of A against B, and then run it again as B against A.
     
     LONGDESC
-    method_option "with", :type => :array, :desc => "provide 1 or more references to craft files"
+    method_option "with", :type => :array, :desc => "provide 1 or more references to craft files", :aliases => "w"
     def craft craft_ref = nil
       return invoke :help if craft_ref.nil?
       
@@ -51,6 +57,7 @@ module CraftComparer
       those.each do |that|        
         compare this, :with => that
       end
+      show_summary
     end
 
     map %w[--all] => :all
@@ -64,10 +71,11 @@ module CraftComparer
           compare this, :with => that
         end
       end
+      show_summary
     end
 
-    map %w[--list] => :list
-    desc "--list", "list all craft files in current directory"
+    map %w[--list -l] => :list
+    desc "--list, -l", "list all craft files in current directory"
     def list
       DirectoryActions.new.show
     end
@@ -85,12 +93,34 @@ module CraftComparer
     def compare this, args = {}
       that = args[:with]
       raise Thor::Error, "craft file not found".red unless this && that     
-      return if this.path == that.path              
+      return if this.path == that.path
+      @summary ||= {:count => 0, :close_matches => []}
+      comp = [[this, that]]
+      comp << comp[0].reverse if options[:reverse]
+      comp.each do |this, that|
+        path_string = "#{this.path}:#{that.path}"
+        next if (@comparison_track || []).include?(path_string)
+        result = this.compare_with that
+        
+        @summary[:count] += 1
+        @summary[:close_matches] << {:this => this, :that => that, :score => result} if result > 21 
 
-      result = this.compare_with that
-      code = result <= 20 ? :green : (result < 50 ? :amber : :red)
-      puts "Compared #{this.craft_name} against #{that.craft_name}\n  #{result}% similar".send(code)
+        puts "Compared #{this.craft_name} against #{that.craft_name}\n  #{result}% similar".send(score_to_color(result))
+        @comparison_track ||= []
+        @comparison_track << path_string
+      end
+    end
 
+    def show_summary
+      puts "Performed #{@summary[:count]} comparisons"
+      puts "Found #{@summary[:close_matches].count} similar craft"
+      @summary[:close_matches].each do |data|
+        puts "#{data[:this].craft_name} was #{data[:score]} similar to #{data[:that].craft_name}".send(score_to_color(data[:score]))
+      end
+    end
+
+    def score_to_color score
+      score <= 20 ? :green : (score < 50 ? :amber : :red) #set which color to print result in. 
     end
 
   end
