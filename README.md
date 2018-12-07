@@ -38,3 +38,4 @@ Then you can run
 which would compare the 3rd craft with the 4th craft in the directory.
 
 add `--no-summary` if you don't want the summary of results at the end.
+use `--threshold` or `-t` to change the threshold for what difference is considered a match (default is 20, ie everything 20% or more similar is considered a match).
