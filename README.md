@@ -36,3 +36,5 @@ Then you can run
 
     compare_craft 3 --with 4
 which would compare the 3rd craft with the 4th craft in the directory.
+
+add `--no-summary` if you don't want the summary of results at the end.
