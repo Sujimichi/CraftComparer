@@ -14,11 +14,12 @@ end
 
 module CraftComparer
   class CLI < Thor
-    attr_accessor :comparison_track, :summary
+    attr_accessor :comparison_track, :summary, :threshold
 
     default_task :craft
-    class_option "reverse", :type => :string, :default => false, :aliases => "r"
-    class_option "summary", :type => :boolean,:default => true, :aliases => "s"
+    class_option "reverse",   :type => :string,   :default => false,:aliases => "r"
+    class_option "summary",   :type => :boolean,  :default => true, :aliases => "s"
+    class_option "threshold", :type => :numeric,  :default => 20,   :aliases => "t"
 
     def self.exit_on_failure?
       true
@@ -91,11 +92,17 @@ module CraftComparer
 
     private
 
+    def prepare
+      @threshold ||= options[:threshold] || 20 
+      @summary ||= {:count => 0, :close_matches => [], :paths => []}
+    end
+
     def compare this, args = {}
       that = args[:with]
       raise Thor::Error, "craft file not found".red unless this && that     
       return if this.path == that.path
-      @summary ||= {:count => 0, :close_matches => [], :paths => []}
+      prepare
+      
       comp = [[this, that]]
       comp << comp[0].reverse if options[:reverse]
       comp.each do |this, that|
@@ -106,7 +113,7 @@ module CraftComparer
         @summary[:count] += 1
         @summary[:paths] << this.path
         @summary[:paths] << that.path
-        @summary[:close_matches] << {:this => this, :that => that, :score => result} if result > 21 
+        @summary[:close_matches] << {:this => this, :that => that, :score => result} if score_to_color(result) != :green
 
         puts "Compared #{this.craft_name} against #{that.craft_name}\n  #{result}% similar".send(score_to_color(result))
         @comparison_track ||= []
@@ -117,15 +124,22 @@ module CraftComparer
     def show_summary
       return unless options[:summary]
       puts "\n~~Craft Comparer #{CraftComparer::VERSION}~~"      
+      print "#{@threshold}% or below - OK (green), ".green
+      print "between #{@threshold}% and #{amber_cut_off}% - possible match (amber), ".amber
+      puts  "#{amber_cut_off}% and higher - close match (red)".red      
       puts "Performed #{@summary[:count]} comparisons over #{@summary[:paths].uniq.count} craft"
       puts "Found #{@summary[:close_matches].count} similar craft"
       @summary[:close_matches].each do |data|
-        puts "#{data[:this].craft_name} was #{data[:score]} similar to #{data[:that].craft_name}".send(score_to_color(data[:score]))
+        puts "#{data[:this].craft_name} was #{data[:score]}% similar to #{data[:that].craft_name}".send(score_to_color(data[:score]))
       end
     end
 
     def score_to_color score
-      score <= 20 ? :green : (score < 50 ? :amber : :red) #set which color to print result in. 
+      score <= @threshold ? :green : (score < amber_cut_off ? :amber : :red) #set which color to print result in. 
+    end
+
+    def amber_cut_off
+      ((100-@threshold)*0.3) + @threshold
     end
 
   end
