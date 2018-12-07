@@ -18,6 +18,7 @@ module CraftComparer
 
     default_task :craft
     class_option "reverse", :type => :string, :default => false, :aliases => "r"
+    class_option "summary", :type => :boolean,:default => true, :aliases => "s"
 
     def self.exit_on_failure?
       true
@@ -94,7 +95,7 @@ module CraftComparer
       that = args[:with]
       raise Thor::Error, "craft file not found".red unless this && that     
       return if this.path == that.path
-      @summary ||= {:count => 0, :close_matches => []}
+      @summary ||= {:count => 0, :close_matches => [], :paths => []}
       comp = [[this, that]]
       comp << comp[0].reverse if options[:reverse]
       comp.each do |this, that|
@@ -103,6 +104,8 @@ module CraftComparer
         result = this.compare_with that
         
         @summary[:count] += 1
+        @summary[:paths] << this.path
+        @summary[:paths] << that.path
         @summary[:close_matches] << {:this => this, :that => that, :score => result} if result > 21 
 
         puts "Compared #{this.craft_name} against #{that.craft_name}\n  #{result}% similar".send(score_to_color(result))
@@ -112,7 +115,9 @@ module CraftComparer
     end
 
     def show_summary
-      puts "Performed #{@summary[:count]} comparisons"
+      return unless options[:summary]
+      puts "\n~~Craft Comparer #{CraftComparer::VERSION}~~"      
+      puts "Performed #{@summary[:count]} comparisons over #{@summary[:paths].uniq.count} craft"
       puts "Found #{@summary[:close_matches].count} similar craft"
       @summary[:close_matches].each do |data|
         puts "#{data[:this].craft_name} was #{data[:score]} similar to #{data[:that].craft_name}".send(score_to_color(data[:score]))
