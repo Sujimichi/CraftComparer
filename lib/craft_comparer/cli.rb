@@ -130,7 +130,7 @@ module CraftComparer
       puts "Performed #{@summary[:count]} comparisons over #{@summary[:paths].uniq.count} craft"
       puts "Found #{@summary[:close_matches].count} similar craft"
       @summary[:close_matches].each do |data|
-        puts "#{data[:this].craft_name} was #{data[:score]}% similar to #{data[:that].craft_name}".send(score_to_color(data[:score]))
+        puts "#{data[:this].craft_name} is #{data[:score]}% similar to #{data[:that].craft_name}".send(score_to_color(data[:score]))
       end
     end
 
