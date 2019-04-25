@@ -17,7 +17,7 @@ module CraftComparer
       raise "craft must be an instance of CraftComparer::Craft" unless craft.is_a?(CraftComparer::Craft)
       #generate an array of @args[:trials] in length and for each element test if the randomly selected section ('window') in the current craft (self)
       #occurs in the comparison craft and count the elements in which the test returns true.
-      hits = @args[:trials].times.select{ craft.string.include?(self.string[*windex]) }.count
+      hits = @args[:trials].times.select{ craft.string.include?(self.string[windex]) }.count
       result = (hits/@args[:trials].to_f * 100).round(2) #convert to percentage
       result #return result
     end
@@ -31,9 +31,17 @@ module CraftComparer
 
     #generate a random index for a 'window'; a randomly sized, randomly located region within the craft data string
     def windex    
-      window = (rand*80 + 20).to_i * @args[:sensitivity] #random integer between 20 and 100 multipled by sensitivity
-      start_index = (rand * @string.length).to_i - window #random integer between 0 and string length minus the window
-      [start_index..start_index+window] #return the range.
+      string_length = @string.length
+      window_max_size = 100
+      window_min_size = 20
+
+      #random integer between 20 and 100 multipled by sensitivity
+      window_size = (rand*(window_max_size - window_min_size) + window_min_size).round * @args[:sensitivity]            
+      window_size = (rand*(string_length * 0.5 - 5) + 5).round if string_length * 0.8 <= window_size
+
+
+      start_index = [(rand * @string.length - window_size).to_i, 0].max #random integer between 0 and string length minus the window      
+      start_index..start_index + window_size #return the range.
     end
 
     #returns an Array of Strings from the first line of the craft file until the first PART
